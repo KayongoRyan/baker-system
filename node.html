@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to our Grand Ville Bakery</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-xxx" crossorigin="anonymous" />
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+</head>
+
+<body>
+
+  
+  <div id="app" class="container mt-5">
+    <h2>Welcome to our Grand Ville Bakery</h2>
+
+    <div v-if="!formSubmitted && !showNextButton">
+      <form @submit.prevent="submitForm" class="needs-validation" novalidate>
+        
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input type="text" id="username" v-model="user.username" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input type="email" id="email" v-model="user.email" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="password" v-model="user.password" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="address">Address:</label>
+          <textarea id="address" v-model="user.address" class="form-control" required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+
+    <div v-if="formSubmitted && !showNextButton" class="mt-3">
+      <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading">Form Submitted Successfully!</h4>
+        <p>Thank you for providing your information.</p>
+        <hr>
+        <p class="mb-0">We have received the following details:</p>
+        <ul>
+          <li><strong>Username:</strong> {{ user.username }}</li>
+          <li><strong>Email:</strong> {{ user.email }}</li>
+          <li><strong>Password:</strong> ******** (for security reasons, not displayed)</li>
+          <li><strong>Address:</strong> {{ user.address }}</li>
+        </ul>
+      </div>
+      <button class="btn btn-primary" @click="showNextStep">Next</button>
+    </div>
+
+    <div v-if="showNextButton" class="mt-3">
+      <div class="form-group">
+        <label for="productSearch">Search for a Product:</label>
+        <input type="text" id="productSearch" v-model="productSearch" class="form-control" placeholder="Search products">
+      </div>
+
+      <ul v-if="productSearch.length > 0" class="list-group">
+        <li v-for="product in filteredProducts" :key="product" class="list-group-item" @click="selectProduct(product)">
+          {{ product }}
+          <button class="btn btn-success btn-sm float-right" @click="buyProduct(product)">Buy</button>
+        </li>
+      </ul>
+
+      <div v-if="selectedProduct" class="text-center mt-3">
+        <div class="card" :class="{ 'd-none': !selectedProduct }">
+          <div class="card-body">
+            <h5 class="card-title">Name of the product:</h5>
+            <p class="card-text">{{ selectedProduct }}</p>
+            <p class="card-text">Price: {{ getProductPrice(selectedProduct) }}</p>
+            <div class="d-flex justify-content-center align-items-center">
+              <button class="btn btn-success mr-2" @click="incrementQuantity">+</button>
+              <p class="mr-2">{{ quantity }}</p>
+              <button class="btn btn-danger" @click="decrementQuantity">-</button>
+              <button class="btn btn-primary ml-2" @click="buyProduct(selectedProduct)">Buy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <h4>Available Products:</h4>
+        <div class="row">
+          <div class="col-md-4" v-for="product in filteredProducts" :key="product">
+            <div class="card mb-3">
+              <div class="card-body">
+                <h5 class="card-title">{{ product }}</h5>
+                <p class="card-text">Description: {{ getProductDescription(product) }}</p>
+                <p class="card-text">Price: {{ getProductPrice(product) }}</p>
+                <span v-if="isTacoTuesday && product.toLowerCase() === 'tacos'"> (Tuesday Promotion!)</span>
+                <div class="d-flex justify-content-center align-items-center">
+                  <button class="btn btn-success mr-2" @click="incrementQuantity">+</button>
+                  <p class="mr-2">{{ quantity }}</p>
+                  <button class="btn btn-danger" @click="decrementQuantity">-</button>
+                  <button class="btn btn-primary ml-2" @click="buyProduct(product)">Buy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card mb-3">
+              <div class="card-body">
+                <h5 class="card-title">Birthday Cake</h5>
+                <p class="card-text">Description: A special cake to celebrate birthdays in style.</p>
+                <p class="card-text">Price: $20.00</p>
+                <div class="d-flex justify-content-center align-items-center">
+                  <button class="btn btn-success mr-2" @click="incrementQuantity">+</button>
+                  <p class="mr-2">{{ quantity }}</p>
+                  <button class="btn btn-danger" @click="decrementQuantity">-</button>
+                  <button class="btn btn-primary ml-2" @click="buyProduct('Birthday Cake')">Buy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Display Bill -->
+      <div v-if="cart.length > 0" class="mt-3">
+        <h4>Your Bill:</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Product</th>
+              <th scope="col">Price</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Total Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in cart" :key="index">
+              <td>{{ item.product }}</td>
+              <!-- Parse the price to a numeric value before displaying -->
+              <td>{{ parseFloat(getProductPrice(item.product)) }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ item.totalPrice }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="text-right"><strong>Total:</strong></td>
+              <td>{{ getTotalPrice() }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        user: {
+          username: '',
+          Email:'',
+          password: '',
+          address: ''
+        },
+        formSubmitted: false,
+        showNextButton: false,
+        productSearch: '',
+        selectedProduct: null,
+        quantity: 1,
+        products: ['sambusa', 'pain-coupe', 'pizza', 'amandazi', 'cakes', 'boulet', 'sausages', 'tacos', 'amata', 'amazi', 'umugati'],
+        isTacoTuesday: false,
+        cart: [],
+      },
+      methods: {
+        submitForm() {
+          this.formSubmitted = true;
+        },
+        showNextStep() {
+          this.showNextButton = true;
+        },
+        selectProduct(product) {
+          this.selectedProduct = product;
+          this.productSearch = product;
+          this.isTacoTuesday = product.toLowerCase() === 'tacos' && new Date().getDay() === 2;
+          this.quantity = 1;
+        },
+        incrementQuantity() {
+          this.quantity += 1;
+        },
+        decrementQuantity() {
+          this.quantity = Math.max(1, this.quantity - 1);
+        },
+        getProductPrice(product) {
+          switch (product.toLowerCase()) {
+            case 'sambusa':
+              return '$2.50';
+            case 'pain-coupe':
+              return '$3.00';
+            case 'pizza':
+              return '$8.00';
+            case 'amandazi':
+              return '$1.50';
+            case 'cakes':
+              return '$15.00';
+            case 'boulet':
+              return '$6.00';
+            case 'sausages':
+              return '$5.00';
+            case 'tacos':
+              return '$3.50';
+            case 'amata':
+              return '$10.00';
+            case 'amazi':
+              return '$4.00';
+            case 'umugati':
+              return '$2.00';
+            case 'birthday cake':
+              return '$20.00';
+            default:
+              return '$10.00';
+          }
+        },
+        getProductDescription(product) {
+          switch (product.toLowerCase()) {
+            case 'sambusa':
+              return 'Delicious stuffed pastry with various fillings.';
+            case 'pain-coupe':
+              return 'French-style bread with a crispy crust and soft interior.';
+            case 'pizza':
+              return 'Classic pizza with your favorite toppings.';
+            case 'amandazi':
+              return 'Sweet and fluffy East African doughnut.';
+            case 'cakes':
+              return 'Rich and decadent cakes for any occasion.';
+            case 'boulet':
+              return 'Savory meatballs for a delightful meal.';
+            case 'sausages':
+              return 'Juicy and flavorful sausages.';
+            case 'tacos':
+              return 'Tasty tacos with various fillings.';
+            case 'amata':
+              return 'Fresh milk from the farm.';
+            case 'amazi':
+              return 'Refreshing and pure water.';
+            case 'umugati':
+              return 'Traditional Rwandan snack.';
+            case 'birthday cake':
+              return 'A special cake to celebrate birthdays in style.';
+            default:
+              return 'Description not available.';
+          }
+        },
+        buyProduct(product) {
+          const cartProduct = this.cart.find((cartItem) => cartItem.product === product);
+
+          if (cartProduct) {
+            cartProduct.quantity += this.quantity;
+            const productPrice = parseFloat(this.getProductPrice(product));
+            cartProduct.totalPrice = cartProduct.quantity * productPrice;
+          } else {
+            const newCartItem = {
+              product: product,
+              quantity: this.quantity,
+              // Parse the price to a numeric value before performing calculations
+              totalPrice: this.quantity * parseFloat(this.getProductPrice(product)),
+            };
+            this.cart.push(newCartItem);
+          }
+
+          alert(`
+            Product: ${product}
+            Description: ${this.getProductDescription(product)}
+            Price: ${this.getProductPrice(product)}
+            Quantity: ${this.quantity}
+            Total Price: ${cartProduct ? cartProduct.totalPrice : this.quantity * parseFloat(this.getProductPrice(product))}
+          `);
+
+          this.quantity = 1;
+        },
+        getTotalPrice() {
+          return this.cart.reduce((total, item) => total + parseFloat(item.totalPrice), 0).toFixed(2);
+        },
+      },
+      computed: {
+        filteredProducts() {
+          return this.products.filter(product =>
+            product.toLowerCase().includes(this.productSearch.toLowerCase())
+          );
+        }
+      }
+    });
+  </script>
+
+  <!-- Bootstrap JS (optional, only needed if you want to use Bootstrap JavaScript features) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  
+
+</body>
+
+</html>

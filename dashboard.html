@@ -1,0 +1,224 @@
+<!-- dashboard.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Manager Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+  <div id="dashboard" class="container mt-5">
+
+    <div class="row">
+      <div class="col-md-3">
+        <h2>Recent User Feedback</h2>
+        <ul>
+          <li v-for="feedback in recentUserFeedback" :key="feedback.id">
+            <strong>{{ feedback.username }}:</strong> {{ feedback.text }}
+          </li>
+        </ul>
+      </div>
+
+      <div class="col-md-9">
+        <h2>Sales Overview</h2>
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <h2>Delivery Status</h2>
+        <ul>
+          <li v-for="delivery in deliveryStatus" :key="delivery.id">
+            {{ delivery.product }} - {{ delivery.status }}
+          </li>
+        </ul>
+      </div>
+
+      <div class="col-md-6">
+        <h2>User Comments</h2>
+        <ul>
+          <li v-for="comment in userComments" :key="comment.id">
+            <strong>{{ comment.username }}:</strong> {{ comment.text }}
+          </li>
+        </ul>
+
+        <!-- Add Pie Chart for Most Consumable Products -->
+        <h2>Most Consumable Products</h2>
+        <canvas id="consumableProductsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <h2>Top Rated Products</h2>
+        <ul>
+          <li v-for="product in topRatedProducts" :key="product.id">
+            {{ product.name }} - Rating: {{ product.rating }}
+          </li>
+        </ul>
+      </div>
+
+      <div class="col-md-6">
+        <h2>Financial Summary</h2>
+        <p>Total Profit ({{ selectedPeriod }}): ${{ totalProfit }}</p>
+        <p>Total Loss ({{ selectedPeriod }}): ${{ totalLoss }}</p>
+      </div>
+    </div>
+
+    <!-- New Charts -->
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <h2>Business Share</h2>
+        <canvas id="businessShareChart"></canvas>
+      </div>
+
+      <div class="col-md-6">
+        <h2>Countries Buying Products</h2>
+        <canvas id="countriesBuyingChart"></canvas>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <h2>Most Active Countries</h2>
+        <canvas id="mostActiveCountriesChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    new Vue({
+      el: '#dashboard',
+      data: {
+        selectedPeriod: 'Day',
+        totalProfit: 0,
+        totalLoss: 0,
+        recentUserFeedback: [
+          { id: 1, username: 'User1', text: 'Great product!' },
+          { id: 2, username: 'User2', text: 'Excellent service!' },
+        ],
+        deliveryStatus: [
+          { id: 1, product: 'Product1', status: 'Delivered' },
+          { id: 2, product: 'Product2', status: 'Pending' },
+        ],
+        userComments: [
+          { id: 1, username: 'User3', text: 'Nice selection of products!' },
+          { id: 2, username: 'User4', text: 'Fast delivery, thank you!' },
+        ],
+        topRatedProducts: [
+          { id: 1, name: 'Product1', rating: 4.5 },
+          { id: 2, name: 'Product2', rating: 5.0 },
+        ],
+        businessShareData: [30, 20, 50], // Replace with actual data
+        countriesBuyingData: [50, 30, 20], // Replace with actual data
+        mostActiveCountriesData: {
+          labels: ['Country1', 'Country2', 'Country3'],
+          data: [100, 80, 60], // Replace with actual data
+        },
+      },
+      mounted() {
+        this.generateSalesChart();
+        this.calculateFinancialSummary();
+        this.generateBusinessShareChart();
+        this.generateCountriesBuyingChart();
+        this.generateMostActiveCountriesChart();
+      },
+      methods: {
+        generateSalesChart() {
+          const ctx = document.getElementById('salesChart').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
+              datasets: [{
+                label: 'Total Sales',
+                data: [10, 20, 15, 25, 30],
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+              }]
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: true
+                }
+              }
+            }
+          });
+        },
+        calculateFinancialSummary() {
+          // Assume some logic to calculate totalProfit and totalLoss based on sales data
+          this.totalProfit = 1500;
+          this.totalLoss = 500;
+        },
+        generateBusinessShareChart() {
+          const ctxBusinessShare = document.getElementById('businessShareChart').getContext('2d');
+          new Chart(ctxBusinessShare, {
+            type: 'doughnut',
+            data: {
+              labels: ['Product1', 'Product2', 'Product3'],
+              datasets: [{
+                data: this.businessShareData,
+                backgroundColor: ['rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)'],
+              }],
+            },
+          });
+        },
+        generateCountriesBuyingChart() {
+          const ctxCountriesBuying = document.getElementById('countriesBuyingChart').getContext('2d');
+          new Chart(ctxCountriesBuying, {
+            type: 'doughnut',
+            data: {
+              labels: ['Country1', 'Country2', 'Country3'],
+              datasets: [{
+                data: this.countriesBuyingData,
+                backgroundColor: ['rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)'],
+              }],
+            },
+          });
+        },
+        generateMostActiveCountriesChart() {
+          const ctxMostActiveCountries = document.getElementById('mostActiveCountriesChart').getContext('2d');
+          new Chart(ctxMostActiveCountries, {
+            type: 'bar',
+            data: {
+              labels: this.mostActiveCountriesData.labels,
+              datasets: [{
+                label: 'Number of Users',
+                data: this.mostActiveCountriesData.data,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+              }],
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: true
+                },
+              },
+            },
+          });
+        },
+      },
+    });
+  </script>
+
+  <!-- Bootstrap JS (optional, only needed if you want to use Bootstrap JavaScript features) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
